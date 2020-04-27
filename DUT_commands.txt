@@ -1,0 +1,2 @@
+cd ~/OptoFidelity\ Touch\ Test/
+python start.py

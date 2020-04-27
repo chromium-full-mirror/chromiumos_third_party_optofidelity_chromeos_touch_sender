@@ -1,0 +1,73 @@
+{
+    "version": 1,
+    "disable_existing_loggers": true,
+
+    "formatters": {
+        "detailed":{
+            "format": "%(asctime)s %(levelname)s %(message)s",
+            "datefmt": "%d/%m/%Y %H:%M:%S"
+            },
+        
+        "basic":{    
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            "datefmt": "%H:%M:%S"
+            }
+        },
+    
+
+    "handlers": {
+        "file":{
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "log/devicelog.log",
+            "formatter": "detailed",
+            "level": "DEBUG",
+            "maxBytes": 10000000,
+            "backupCount": 10,
+            "encoding": "utf8"
+            },
+
+        "console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "basic",
+            "level": "INFO"
+            }
+        },
+
+    "loggers": {
+        "chromeos_tester.sockethandler": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": 1
+            },
+        "chromeos_tester.util.config_utils": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": 1
+            },
+        "chromeos_tester.eventsenders": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": 1
+            },
+        "chromeos_tester.guihandler": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": 1
+            }
+        },
+        "chromeos_tester.util.devicechooser": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": 1
+        },
+        "root": {
+            "level": "INFO",
+            "handlers": ["console"]
+        }
+}
+
+
+    
+
+    

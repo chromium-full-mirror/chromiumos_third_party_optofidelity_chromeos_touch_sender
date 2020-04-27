@@ -1,0 +1,1 @@
+plink chronos@192.168.127.2 -pw test0000 -m "C:\OptoFidelity\ChromeOS Test App\DUT_commands.txt"

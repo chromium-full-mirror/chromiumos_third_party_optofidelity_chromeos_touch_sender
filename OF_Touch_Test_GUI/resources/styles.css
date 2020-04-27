@@ -1,0 +1,165 @@
+/*
+Copyright (c) 2019, OptoFidelity OY
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    3. All advertising materials mentioning features or use of this software must display the following acknowledgement: This product includes software developed by the OptoFidelity OY.
+    4. Neither the name of the OptoFidelity OY nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color:transparent;
+}
+
+#body_container {
+    z-index:1;
+}
+
+button, input, select {
+    border-radius:3px;
+    border-width:0px;
+    outline:none;
+}
+
+button {
+    background-color:black;
+    color:white;
+    font-size: 150%;
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: white;
+    padding:3px;
+    padding-left:10px;
+    padding-right:10px;
+    width:7em;
+}
+button:disabled {
+    color:gray;
+}
+
+button:active {
+    box-shadow: 0px 0px 8px #888;
+    color:gray;
+}
+
+#latency_btn {
+    display:none;
+}
+
+input, select {
+    padding:3px;
+    margin:6px;
+}
+
+input:focus {
+    outline: none;
+}
+
+input[name=ip] {
+    width:10em;
+}
+input[name=port] {
+    width:4em;
+}
+
+#canvas {
+    position:absolute;
+    top:0;
+    left:0;
+    background-color:black;
+    z-index:0;
+}
+
+#measurement, #configuration {
+    color:#FFF;
+}
+
+#measurement {
+    margin:20px;
+}
+
+#configuration {
+    display:block;
+    position: absolute;
+    width:100%;
+    top: 20px;
+    margin:auto;
+    text-align: center;
+}
+
+#devpaths {
+    width:10em;
+}
+
+#error {
+    font-size:130%;
+}
+
+#info {
+    float:left;
+}
+
+#latency {
+    display:none;
+}
+
+#measurement{
+    display:none;
+}
+
+#latency {
+    width:105px;
+    height:105px;
+    float: right;
+    background-color: #000;
+    margin:-25px;
+}
+
+#optofidelity {
+    display:block;
+    position: absolute;
+    width:100%;
+    bottom: 10px;
+    margin:auto;
+    text-align: center;
+    color:#FFF;
+    z-index:0;
+}
+
+#about {
+    margin-left:auto;
+    margin-right:auto;
+    margin-top:10px;
+    display:none;
+}
+
+#about_btn {
+    margin-left:auto;
+    margin-right:auto;
+    width:8em;
+}
+
+#logo {
+    max-height: 100px;
+    max-width: 300px;
+    width: auto;
+    height: auto;
+    background-color:white;
+    border-radius: 5px;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "OptoFidelity Touch Tester",
+  "description": "Graphical user interface for Optofidelity Tester application",
+  "version": "1.2",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "permissions": ["fullscreen", "power"],
+  "icons": { 
+    "16": "resources/optofidelity_16.png", 
+    "128": "resources/optofidelity_128.png",
+    "256": "resources/optofidelity_256.png",
+    "512": "resources/optofidelity_512.png"
+  },
+  "sockets": {
+    "tcp": {
+      "connect": ""
+    },
+    "tcpServer": {
+      "listen": ":50008"
+    }
+  }
+}

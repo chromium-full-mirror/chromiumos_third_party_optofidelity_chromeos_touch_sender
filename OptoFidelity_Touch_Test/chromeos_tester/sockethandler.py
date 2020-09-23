@@ -191,13 +191,13 @@ class SocketHandler(object):
                     # Connection timeout
                     self.socket_lock.release()
 
-                except socket.error, e:
+                except socket.error as e:
                     # Other socket errors
                     self.socket_lock.release()
                     # Broken pipe error or connection reset by peer
-                    if e[0] == errno.EPIPE or e[0] == errno.ECONNRESET:
+                    if e.errno == errno.EPIPE or e.errno == errno.ECONNRESET:
                         self.connection_ok = False
-                    elif e[0] == errno.EAGAIN:
+                    elif e.errno == errno.EAGAIN:
                         pass
                     else:
                         logger.warn(e)
@@ -246,7 +246,7 @@ class SocketHandler(object):
                     try:
                         self.socket_lock.acquire()
                         # Try to send message and empty data container
-                        self.s.send(full_msg)
+                        self.s.send(full_msg.encode('utf-8'))
                         self.socket_lock.release()
 
                     except socket.timeout:
@@ -254,13 +254,13 @@ class SocketHandler(object):
                         self.socket_lock.release()
                         logger.warn("Connection timeout when sending data")
 
-                    except socket.error, e:
+                    except socket.error as e:
                         self.socket_lock.release()
                         # Other socket errors
                         self.connection_ok = False
 
                         # Broken pipe error or connection reset by peer
-                        if e[0] == errno.EPIPE or e[0] == errno.ECONNRESET or errno.EWOULDBLOCK:
+                        if e.errno == errno.EPIPE or e.errno == errno.ECONNRESET or errno.EWOULDBLOCK:
                             logger.warn("Connection broken, trying to reconnect")
                             self.socket_lock.acquire()
                             self.init_connection(retries=-1)

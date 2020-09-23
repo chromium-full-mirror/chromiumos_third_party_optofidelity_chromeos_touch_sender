@@ -66,11 +66,11 @@ class DeviceChooser(object):
             self._devices.insert(0, device)
 
         for i in range(len(self._devices)):
-            print '{}: {}, {}'.format(i, self._devices[i].path, self._devices[i].name)
+            print('{}: {}, {}'.format(i, self._devices[i].path, self._devices[i].name))
 
         print('Choose device 0-{}:'.format(len(self._devices) - 1))
         try:
-            ind = raw_input('>> ')
+            ind = input('>> ')
             ind = int(ind)
             if not 0 <= ind < len(self._devices):
                 raise ValueError

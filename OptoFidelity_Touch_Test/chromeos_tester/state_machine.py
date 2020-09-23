@@ -3,7 +3,7 @@
 # found in the LICENSE_chromiumos file.
 import math
 from collections import namedtuple
-from event import MtEvent, EV_ABS, ABS_MT_TRACKING_ID
+from .event import MtEvent, EV_ABS, ABS_MT_TRACKING_ID
 
 
 MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure'])
@@ -278,7 +278,7 @@ class MtbStateMachine(MtStateMachine):
         return self.actions
 
     def get_slot_of_tid(self, tid):
-        return self.tid.keys()[self.tid.values().index(tid)]
+        return list(self.tid.keys())[list(self.tid.values()).index(tid)]
 
     def is_active(self):
         return self.button_pressed
@@ -490,6 +490,6 @@ if __name__ == '__main__':
             y = i - 180
 
         sm.set_tilts_with_tilt_and_yaw(t, y)
-        print "#"*5
-        print "Set : ({}, {})".format(90 - t,y)
-        print "Calc: {}".format(sm.get_tilt_and_yaw())
+        print("#"*5)
+        print("Set : ({}, {})".format(90 - t,y))
+        print("Calc: {}".format(sm.get_tilt_and_yaw()))

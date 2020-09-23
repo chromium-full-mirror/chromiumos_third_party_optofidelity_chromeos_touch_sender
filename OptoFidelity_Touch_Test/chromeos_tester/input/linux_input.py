@@ -7,7 +7,7 @@
 # Python version of include/linux/input.h
 #  as of kernel v2.6.39
 
-from linux_ioctl import *
+from .linux_ioctl import *
 
 # The event structure itself
 #   struct input_event {
@@ -788,7 +788,7 @@ ABS_MT_DISTANCE     = 0x3b  # Contact hover distance
 
 ABS_MT_FIRST        = ABS_MT_TOUCH_MAJOR
 ABS_MT_LAST         = ABS_MT_DISTANCE
-ABS_MT_RANGE        = range(ABS_MT_FIRST, ABS_MT_LAST+1)
+ABS_MT_RANGE        = list(range(ABS_MT_FIRST, ABS_MT_LAST+1))
 
 ABS_MAX             = 0x3f
 ABS_CNT             = (ABS_MAX + 1)
@@ -1100,7 +1100,7 @@ input subsystem from python scripts.
 BITS_PER_WORD = 8
 
 def NBITS(x):
-    return ((x - 1) / BITS_PER_WORD) + 1
+    return ((x - 1) // BITS_PER_WORD) + 1
 
 def OFFSET(x):
     return (x % BITS_PER_WORD)
@@ -1109,7 +1109,7 @@ def BIT(x):
     return (1 << OFFSET(x))
 
 def INDEX(x):
-    return (x / BITS_PER_WORD)
+    return (x // BITS_PER_WORD)
 
 def test_bit(b, a):
     return ((a[INDEX(b)] >> OFFSET(b)) & 1)

@@ -163,9 +163,9 @@ class JavascriptGUI(object):
         try:
             sock.send(msg + ';')
 
-        except socket.error, e:
+        except socket.error as e:
 
-            if e[0] == errno.EPIPE or e[0] == errno.ECONNRESET:
+            if e.errno == errno.EPIPE or e.errno == errno.ECONNRESET:
                 logger.warn("Connection broken, trying to reconnect")
 
             else:
@@ -201,7 +201,7 @@ class JavascriptGUI(object):
             msg = "conn:{}".format(status)
             try:
                 self.send_tcp_msg(self.s, msg)
-            except socket.error, e:
+            except socket.error as e:
                 # Just warning if can't send, nothing crucial
                 logger.warn(e)
 

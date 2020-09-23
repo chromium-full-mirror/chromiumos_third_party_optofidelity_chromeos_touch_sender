@@ -19,7 +19,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-import ConfigParser
+import configparser
 import logging.config
 import os
 import json
@@ -39,12 +39,12 @@ def get_file_config(config_file_name):
     ip = port = device_type = max_freq = None
     conf = {}
 
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     logger.debug("Reading configuration from file: {}".format(config_file_name))
 
     try:
         config.read(config_file_name)
-    except ConfigParser.ParsingError as e:
+    except configparser.ParsingError as e:
         logger.warn('Error parsing configuration file {}'.format(config_file_name))
         raise ValueError(e.message.strip())
 
@@ -62,7 +62,7 @@ def get_file_config(config_file_name):
             conf[item[0]] = config.get(section, item[0])
 
     msg = ''
-    for key in conf.keys():
+    for key in conf:
         msg += '\n{:>15}: {}'.format(key, conf[key])
 
     logger.debug('Using configuration:' + msg)
@@ -73,7 +73,7 @@ def get_file_config(config_file_name):
 def write_config_file(filename, section, **kwargs):
     """ Function for writing keyword arguments to configuration file
     """
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.add_section(section)
 
     for key in kwargs:

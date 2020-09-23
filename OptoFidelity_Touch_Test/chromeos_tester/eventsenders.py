@@ -11,14 +11,14 @@ import threading
 import time
 
 from threading import Lock
-from event import MtEvent
-from state_machine import *
-from input.input_device import InputEvent
-from input.linux_input import *
-from sockethandler import SocketHandler
-from guihandler import JavascriptGUI
-from util import devicechooser
-from util import config_utils as util
+from .event import MtEvent
+from .state_machine import *
+from .input.input_device import InputEvent
+from .input.linux_input import *
+from .sockethandler import SocketHandler
+from .guihandler import JavascriptGUI
+from .util import devicechooser
+from .util import config_utils as util
 
 MTA = 'mta'
 MTB = 'mtb'
@@ -99,13 +99,13 @@ class SnapshotSender(object):
 
                 # Wait for data to be readable from device
                 _rl, _, _ = select.select([self.device.f], [], [], 0.2)
-            except select.error, v:
+            except select.error as v:
                 self.device_lock.release()
 
                 # https://mail.python.org/pipermail/python-dev/2000-October/009671.html
                 # and
                 # http://stackoverflow.com/questions/5633067/signal-handling-in-pylons
-                if v[0] == errno.EINTR:
+                if v.errno == errno.EINTR:
                     continue
                 else:
                     raise

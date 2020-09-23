@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE_chromiumos file.
 
-from input.linux_input import *
+from .input.linux_input import *
 
 class MtEvent(object):
   """ Class that holds the a single MT event """

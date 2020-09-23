@@ -2,7 +2,7 @@
 
 This is repository of testing app for Chromium OS.
 
-Python (ver. 2.7.10) script reads kernel events from specified device and sends parsed information to server via socket.
+Python script reads kernel events from specified device and sends parsed information to server via socket.
 
 GUI is Chromium OS application written in javascript. It creates a socket server to port 50008, to which the python app will try to connect.
 Using of GUI is optional, but recommended, since controlling and configurating the app is a lot easier with it.
@@ -16,7 +16,7 @@ This section describes how to configure the program.
 #### App configuration ####
 
 The default configuration file of application may be found from [config/default.cfg](config/default.cfg).
-The configuration file is read with [ConfigParser](https://docs.python.org/2.7/library/configparser.html).
+The configuration file is read with [ConfigParser](https://docs.python.org/3.6/library/configparser.html).
 Section names are ignored and may be overwritten.
 
 Available parameters are:

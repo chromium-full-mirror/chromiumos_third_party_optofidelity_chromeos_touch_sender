@@ -3,7 +3,8 @@
 # found in the LICENSE_chromiumos file.
 import math
 from collections import namedtuple
-from .event import MtEvent, EV_ABS, ABS_MT_TRACKING_ID
+from .event import MtEvent
+from evdev.ecodes import EV_ABS, ABS_MT_TRACKING_ID
 
 
 MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure'])
@@ -46,11 +47,11 @@ class MtStateMachine(object):
             raise ValueError('The pressure source "%s" is not valid.')
         self.pressure_src = pressure_src
 
-def add_event(self, event):
-    raise NotImplementedError('Error: add_event() not implemented.')
+    def add_event(self, event):
+        raise NotImplementedError('add_event() not implemented.')
 
-def get_current_snapshot(self, request_data_ready=True):
-    raise NotImplementedError('Error: get_current_snapshot() not implemented.')
+    def get_current_snapshot(self, request_data_ready=True):
+        raise NotImplementedError('get_current_snapshot() not implemented.')
 
 
 class MtaStateMachine(MtStateMachine):

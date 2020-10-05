@@ -10,11 +10,10 @@ import logging
 import threading
 import time
 
+from evdev import ecodes
 from threading import Lock
 from .event import MtEvent
-from .state_machine import *
-from .input.input_device import InputEvent
-from .input.linux_input import *
+from .state_machine import MtaStateMachine, MtbStateMachine, StylusStateMachine
 from .sockethandler import SocketHandler
 from .guihandler import JavascriptGUI
 from .util import devicechooser
@@ -81,55 +80,24 @@ class SnapshotSender(object):
                 raise ValueError('Valid screen height is required, if GUI is not')
 
     def collectEvents(self):
-        ev = InputEvent()
-
         while self.collect_events:
-            try:
+            if self.changing_device or self.device is None:
+                time.sleep(0.1)
+                continue
 
-                if self.changing_device or self.device is None:
-                    time.sleep(0.1)
-                    continue
-
-                self.device_lock.acquire()
-
+            with self.device_lock:
                 # Grab the device if it is not active and should be grabbed
-                if self.should_grab_device and self.device.get_num_tools() == 0:
+                if self.should_grab_device and not self.device.touch_active():
                     self.device.grab()
                     self.should_grab_device = False
 
-                # Wait for data to be readable from device
-                _rl, _, _ = select.select([self.device.f], [], [], 0.2)
-            except select.error as v:
-                self.device_lock.release()
+                ev = self.device.read_one()
 
-                # https://mail.python.org/pipermail/python-dev/2000-October/009671.html
-                # and
-                # http://stackoverflow.com/questions/5633067/signal-handling-in-pylons
-                if v.errno == errno.EINTR:
-                    continue
-                else:
-                    raise
-
-            for fd in _rl:
-                try:
-                    ev.read(fd)
-                except ValueError as e:
-                    logger.warning(e)
-                    break
-
-                self.device.process_event(ev)
-
-                if not self.paused:
+                if ev is not None and not self.paused:
                     # Create MtEvent and add it to eventlist
                     event = self.createEvent(ev)
-
-                    self.event_lock.acquire()
-
-                    self.events.append(event)
-
-                    self.event_lock.release()
-
-            self.device_lock.release()
+                    with self.event_lock:
+                        self.events.append(event)
 
     def configFromFile(self, filename):
         """ This function reads configuration file and sets class variables
@@ -172,8 +140,7 @@ class SnapshotSender(object):
 
     def createEvent(self, ev):
         """ Create MtEvent from raw event """
-        time = float(ev.tv_sec) + float(ev.tv_usec) / 10**6
-        event = MtEvent(timestamp=time, event_type=ev.type,
+        event = MtEvent(timestamp=ev.timestamp(), event_type=ev.type,
                         event_code=ev.code, value=ev.value)
         return event
 
@@ -259,16 +226,16 @@ class SnapshotSender(object):
     def getDeviceDataLimits(self):
         try:
             # Get device min/max info
-            self.min_x = self.device.get_x_min()
-            self.max_x = self.device.get_x_max()
-            self.min_y = self.device.get_y_min()
-            self.max_y = self.device.get_y_max()
+            self.min_x = self.device.absinfo(ecodes.ABS_X).min
+            self.max_x = self.device.absinfo(ecodes.ABS_X).max
+            self.min_y = self.device.absinfo(ecodes.ABS_Y).min
+            self.max_y = self.device.absinfo(ecodes.ABS_Y).max
 
             # Get initial values of coordinates from device, if available
             if self.device_type == STYLUS:
-                self.sm.x = self.device.get_x()
-                self.sm.y = self.device.get_y()
-                self.sm.p = self.device.get_pressure()
+                self.sm.x = self.device.absinfo(ecodes.ABS_X).value
+                self.sm.y = self.device.absinfo(ecodes.ABS_Y).value
+                self.sm.p = self.device.absinfo(ecodes.ABS_PRESSURE).value
 
         except:
             logger.warn(sys.exc_info()[0])
@@ -314,12 +281,9 @@ class SnapshotSender(object):
             return None
 
         # When events available, return first event and remove it from list
-        self.event_lock.acquire()
-
-        event = self.events[0]
-        self.events.pop(0)
-
-        self.event_lock.release()
+        with self.event_lock:
+            event = self.events[0]
+            self.events.pop(0)
 
         return event
 
@@ -341,11 +305,7 @@ class SnapshotSender(object):
 
                 if self.sm.buffer_overrun:
                     logger.warn('Device buffer overflow')
-                    self.device_lock.acquire()
-                    self.device.reset(self.device.path)
                     self.sm.buffer_overrun = False
-                    self.should_grab_device = True
-                    self.device_lock.release()
                     logger.info('Device connection reseted')
 
                 else:
@@ -447,16 +407,15 @@ class SnapshotSender(object):
         elif self.device is not None:
             self.device.shutdown()
         self.changing_device = True
-        self.device_lock.acquire()
-        logger.info('Changing device to {}'.format(self.devpath))
-        self.device = device
-        logger.info('Device changed, getting limits')
-        self.getDeviceDataLimits()
-        logger.debug('Device datalimits obtained, updating current device path')
-        self.devpath = self.device.path
-        logger.info('Device path is currently {}'.format(self.devpath))
-        self.matchDeviceAndSM()
-        self.device_lock.release()
+        with self.device_lock:
+            logger.info('Changing device to {}'.format(self.devpath))
+            self.device = device
+            logger.info('Device changed, getting limits')
+            self.getDeviceDataLimits()
+            logger.debug('Device datalimits obtained, updating current device path')
+            self.devpath = self.device.path
+            logger.info('Device path is currently {}'.format(self.devpath))
+            self.matchDeviceAndSM()
 
         self.changing_device = False
 

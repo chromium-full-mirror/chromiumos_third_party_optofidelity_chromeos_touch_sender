@@ -19,12 +19,54 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-from chromeos_tester.input import input_device
+from evdev import device, ecodes
 import glob
 import sys
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class TouchDevice(device.InputDevice):
+    """ Class that adds a few helpful multi-touch methods to the evdev
+        InputDevice class.
+    """
+    ABS_MT_RANGE = list(range(ecodes.ABS_MT_TOUCH_MAJOR,
+                              ecodes.ABS_MT_TOOL_Y + 1))
+
+    def __init__(self, dev):
+        self.grabbed = False
+        super().__init__(dev)
+
+    def _abs_capabilities(self):
+        return self.capabilities(absinfo=False)[ecodes.EV_ABS]
+
+    def _is_mt(self):
+        return (ecodes.EV_ABS in self.capabilities() and
+                (set(self._abs_capabilities()) & set(TouchDevice.ABS_MT_RANGE)))
+
+    def is_mt_b(self):
+        return (self._is_mt() and
+                ecodes.ABS_MT_SLOT in self._abs_capabilities())
+
+    def is_mt_a(self):
+        return (self._is_mt() and
+                ecodes.ABS_MT_SLOT not in self._abs_capabilities())
+
+    def touch_active(self):
+        return self.absinfo(ecodes.BTN_TOUCH).value == 1
+
+    def grab(self):
+        self.grabbed = True
+        super().grab()
+
+    def ungrab(self):
+        self.grabbed = False
+        super().ungrab()
+
+    def shutdown(self):
+        self.ungrab()
+        self.close()
 
 
 class DeviceChooser(object):
@@ -48,11 +90,11 @@ class DeviceChooser(object):
             else:
                 logger.debug('Closing {} and opening {}'.format(self._device.path, devpath))
                 self._device.shutdown()
-                self._device = input_device.InputDevice(devpath)
+                self._device = TouchDevice(devpath)
                 return
 
         elif devpath in self._dev_paths:
-            self._device = input_device.InputDevice(devpath)
+            self._device = TouchDevice(devpath)
 
         else:
             logger.info('Device not available at the given path, not changing the device')
@@ -62,7 +104,7 @@ class DeviceChooser(object):
 
         for path in self._dev_paths:
             logger.debug('Opening {}'.format(path))
-            device = input_device.InputDevice(path)
+            device = TouchDevice(path)
             self._devices.insert(0, device)
 
         for i in range(len(self._devices)):

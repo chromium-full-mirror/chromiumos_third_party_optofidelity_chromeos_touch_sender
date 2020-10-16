@@ -14,14 +14,13 @@ from collections import namedtuple
 from evdev import ecodes
 from threading import Lock
 from .event import MtEvent
-from .state_machine import (Action, MtFinger, MtSnapshot, MtaStateMachine,
+from .state_machine import (Action, MtFinger, MtSnapshot,
                             MtbStateMachine, StylusStateMachine)
 from .sockethandler import SocketHandler
 from .guihandler import JavascriptGUI
 from .util import devicechooser
 from .util import config_utils as util
 
-MTA = 'mta'
 MTB = 'mtb'
 STYLUS = 'stylus'
 
@@ -249,12 +248,6 @@ class SnapshotSender(object):
                 sm = self.sm
             else:
                 sm = StylusStateMachine()
-        elif self.device_type == MTA:
-            logger.error('Using MTA state machine (not implemented)')
-            if isinstance(self.sm, MtaStateMachine):
-                sm = self.sm
-            else:
-                sm = None
         elif self.device_type == MTB:
             logger.info('Using MTB state machine')
             if isinstance(self.sm, MtbStateMachine):
@@ -386,7 +379,6 @@ class SnapshotSender(object):
         elif self.device.is_mt_b():
             self.device_type = MTB
         elif self.device.is_mt_a():
-            self.device_type = MTA
             raise NotImplementedError('Mta devices not supported!')
         else:
             self.device_type = STYLUS

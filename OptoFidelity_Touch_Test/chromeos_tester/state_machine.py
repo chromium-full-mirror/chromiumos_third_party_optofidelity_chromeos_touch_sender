@@ -3,6 +3,7 @@
 # found in the LICENSE_chromiumos file.
 import math
 from collections import namedtuple
+from enum import IntEnum
 from .event import MtEvent
 from evdev.ecodes import EV_ABS, ABS_MT_TRACKING_ID
 
@@ -11,14 +12,15 @@ MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure'])
 MtSnapshot = namedtuple('MtSnapshot', ['syn_time', 'button_pressed',
                                        'fingers', 'raw_events'])
 
-# Touch actions
-ACTION_DOWN         = 0
-ACTION_UP           = 1
-ACTION_MOVE         = 2
-ACTION_CANCEL       = 3
-ACTION_HOVER_DOWN   = 9
-ACTION_HOVER_MOVE   = 7
-ACTION_HOVER_UP     = 10
+class Action(IntEnum):
+    """ Touch actions """
+    DOWN         = 0
+    UP           = 1
+    MOVE         = 2
+    CANCEL       = 3
+    HOVER_DOWN   = 9
+    HOVER_MOVE   = 7
+    HOVER_UP     = 10
 
 class MtStateMachine(object):
     """ This is an abstract base class that defines the interface of a multitouch
@@ -227,13 +229,13 @@ class MtbStateMachine(MtStateMachine):
         # By default set all slots used to ACTON_MOVE
         self.actions = {}
         for slot in self.slots_in_use:
-            self.actions[slot] = ACTION_MOVE
+            self.actions[slot] = Action.MOVE
         # If slot was added or discarded, set according action status
         for slot in self.slots_modified:
             if self.tid[slot] <= MtEvent.LEAVING_TRACKING_ID:
-                self.actions[slot] = ACTION_UP
+                self.actions[slot] = Action.UP
             else:
-                self.actions[slot] = ACTION_DOWN
+                self.actions[slot] = Action.DOWN
 
     def _build_current_snapshot(self):
         """Build current packet's data including x, y, pressure, and
@@ -318,29 +320,29 @@ class StylusStateMachine(MtStateMachine):
 
     def __update_action_state(self):
         # By default, touch moved or touch_hovering action
-        if self.is_hovering: self.action = ACTION_HOVER_MOVE
-        else: self.action = ACTION_MOVE
+        if self.is_hovering: self.action = Action.HOVER_MOVE
+        else: self.action = Action.MOVE
 
         if self.touch_updated and self.btn_touch:
             # Touch started action
-            self.action = ACTION_DOWN
+            self.action = Action.DOWN
         elif self.touch_updated and self.is_hovering:
             # Tool hovering, touch ended action
-            self.action = ACTION_UP
+            self.action = Action.UP
         elif self.is_hovering and self.tool_updated:
             # Tool started hovering
-            self.action = ACTION_HOVER_DOWN
+            self.action = Action.HOVER_DOWN
         elif self.is_hovering:
             # Tool hovering
-            self.action = ACTION_HOVER_MOVE
+            self.action = Action.HOVER_MOVE
         elif self.tool_updated and not self.is_hovering:
             # Tool hovering ended
-            self.action = ACTION_HOVER_UP
+            self.action = Action.HOVER_UP
 
         if self.touch_updated and self.tool_updated and \
                 not self.btn_touch and not self.btn_tool_pen:
             # Tool and touch disappeared in same event, touch cancelled
-            self.action = ACTION_CANCEL
+            self.action = Action.CANCEL
 
     def add_event(self, event):
         self.raw_events_since_last_syn.append(event)

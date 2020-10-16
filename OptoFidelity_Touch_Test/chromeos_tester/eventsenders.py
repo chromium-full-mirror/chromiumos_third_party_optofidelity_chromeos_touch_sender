@@ -10,10 +10,12 @@ import logging
 import threading
 import time
 
+from collections import namedtuple
 from evdev import ecodes
 from threading import Lock
 from .event import MtEvent
-from .state_machine import MtaStateMachine, MtbStateMachine, StylusStateMachine
+from .state_machine import (Action, MtFinger, MtSnapshot, MtaStateMachine,
+                            MtbStateMachine, StylusStateMachine)
 from .sockethandler import SocketHandler
 from .guihandler import JavascriptGUI
 from .util import devicechooser
@@ -25,6 +27,11 @@ STYLUS = 'stylus'
 
 logger = logging.getLogger(__name__)
 
+# This is the measurement format expected by the Optofidelity TPPT software,
+# defined here:
+# https://chromium.googlesource.com/chromiumos/third_party/optofidelity_TPPT/+/refs/heads/master/TPPTcommon/Measurement/Base.py
+Measurement = namedtuple('Measurement', ['panel_x', 'panel_y', 'pressure',
+    'finger_id', 'delay', 'time', 'event', 'yaw', 'tilt', 'UNKNOWN']
 
 class SnapshotSender(object):
     """ Class for sending snapshot stream with to other application via socket.
@@ -147,66 +154,56 @@ class SnapshotSender(object):
     def createMessage(self, snapshot):
         """ Create a data list from snapshot information
         """
-
-        # Actions:
-        # 0 = touch started (ACTION_DOWN)
-        # 1 = touch ended (ACTION_UP)
-        # 2 = touch moved (Usual case, ACTION_MOVE)
-        # 3 = touch cancelled (touch not lifted up, but ended. ACTION_CANCEL)
-        # 9 = hovering started (ACTION_HOVER_DOWN)
-        # 7 = hovering (ACTION_HOVER_MOVE)
-        # 10 = hovering ended (ACTION_HOVER_UP)
         actions = self.sm.get_current_action_state()
 
         datas = []
 
         # Seconds to milliseconds
-        time = int(float(snapshot[0]) * 1000)
+        time = int(float(snapshot.syn_time) * 1000)
 
         if self.device_type == STYLUS:
             # Usually only one stylus at a time, but loop through just to be
             # sure
-            for pointer in snapshot[2]:
-                pointerID = str(pointer[0])
-                # Check that x-coordinate is not None
-                if pointer[2] is not None:
-                    x = float(pointer[2])
+            for pointer in snapshot.fingers:
+                pointer_id = str(pointer.tid)
+                if pointer.x is not None:
+                    x = float(pointer.x)
                 else:
                     x = None
-                # Check that y-coordinate is not None
-                if pointer[3] is not None:
-                    y = float(pointer[3])
+                if pointer.y is not None:
+                    y = float(pointer.y)
                 else:
                     y = None
-                # Check that pressure is not None
                 p = 0.0
-                if pointer[4] is not None:
-                    p = float(pointer[4])
+                if pointer.pressure is not None:
+                    p = float(pointer.pressure)
 
                 # Scale coordinates to pixels
                 (x, y) = self.scaleData(x, y)
 
                 # Get tilt and yaw angles of stylus
                 (tilt, yaw) = self.sm.get_tilt_and_yaw()
-                act = actions[int(pointer[0])]
+                act = actions[int(pointer.tid)]
 
                 # Create datalist and add it to list
-                data = [x, y, p, pointerID, 0, time, act, yaw, tilt, 0]
+                data = Measurement(x, y, p, pointer_id, 0,
+                                   time, act, yaw, tilt,0)
                 datas.append(data)
 
         elif self.device_type == MTB:
             # Loop through all fingers
-            for finger in snapshot[2]:
-                slot = self.sm.get_slot_of_tid(finger[0])
-                # Use slot as pointerID
-                pointerID = str(slot)
+            for finger in snapshot.fingers:
+                slot = self.sm.get_slot_of_tid(finger.tid)
+                # Use slot as pointer_id
+                pointer_id = str(slot)
                 # Scale coordinates to pixels
-                (x, y) = self.scaleData(float(finger[2]), float(finger[3]))
-                p = float(finger[4])
+                (x, y) = self.scaleData(float(finger.x), float(finger.y))
+                p = float(finger.pressure)
                 tilt = 0.0
                 yaw = 0.0
                 act = actions[slot]
-                data = [x, y, p, pointerID, 0, time, act, yaw, tilt, 0]
+                data = Measurement(x, y, p, pointer_id, 0,
+                                   time, act, yaw, tilt, 0)
                 datas.append(data)
 
         else:
@@ -494,31 +491,29 @@ class SnapshotSender(object):
         pass
 
     def showData(self, datas):
-
-        # Default: ACTION_END
-        major_action = 1
+        # Default: UP
+        major_action = Action.UP
 
         for data in datas:
-            # If some touch is moving, action is always ACTION_MOVE
-            if data[6] == 2:
-                major_action = 2
+            # If some touch is moving, action is always MOVE
+            if data.event == Action.MOVE:
+                major_action = Action.MOVE
                 break
 
-            # If action is not ACTION_MOVE, assign current value.
+            # If action is not MOVE, assign current value.
             # However, if touch is starting, consider it as major action.
-            # Thus ACTION_START overrides ACTION_END, ACTION_CANCEL and all
-            # hover actions.
-            elif major_action != 0:
-                major_action = data[6]
+            # Thus DOWN overrides UP, CANCEL and all hover actions.
+            elif major_action != Action.DOWN:
+                major_action = data.event
 
         x = []
         y = []
         p = []
 
         for data in datas:
-            x.append(data[0])
-            y.append(data[1])
-            p.append(data[2])
+            x.append(data.panel_x)
+            y.append(data.panel_y)
+            p.append(data.pressure)
 
         self.gui.set_info(x, y, p, major_action)
         self.updateConnectionStatus()

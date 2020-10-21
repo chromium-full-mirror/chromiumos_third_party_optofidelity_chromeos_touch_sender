@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # defined here:
 # https://chromium.googlesource.com/chromiumos/third_party/optofidelity_TPPT/+/refs/heads/master/TPPTcommon/Measurement/Base.py
 Measurement = namedtuple('Measurement', ['panel_x', 'panel_y', 'pressure',
-    'finger_id', 'delay', 'time', 'event', 'yaw', 'tilt', 'UNKNOWN']
+    'finger_id', 'delay', 'time', 'event', 'yaw', 'tilt', 'UNKNOWN'])
 
 class SnapshotSender(object):
     """ Class for sending snapshot stream with to other application via socket.
@@ -186,7 +186,7 @@ class SnapshotSender(object):
 
                 # Create datalist and add it to list
                 data = Measurement(x, y, p, pointer_id, 0,
-                                   time, act, yaw, tilt,0)
+                                   time, act, yaw, tilt, 0)
                 datas.append(data)
 
         elif self.device_type == MTB:

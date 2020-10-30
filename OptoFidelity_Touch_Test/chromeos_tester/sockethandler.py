@@ -57,9 +57,11 @@ class SocketHandler(object):
         self.port = port
         self.timeout = timeout
         self.retries = -1
+        self.config_msg = ''
         self.messages = []
         self.run_thread = True
         self.connection_ok = False
+        self.config_lock = Lock()
         self.msg_lock = Lock()
         self.socket_lock = Lock()
         self.send_thread = threading.Thread(target=self.sender_thread)
@@ -117,6 +119,8 @@ class SocketHandler(object):
             self.messages.pop(0)
 
         self.msg_lock.release()
+        if ev_count > 0:
+            msg = '[' + msg + "'OK','']"
         return msg
 
 
@@ -225,19 +229,24 @@ class SocketHandler(object):
 
         self.msg_lock.release()
 
+    def send_config(self, msg):
+        with self.config_lock:
+            self.config_msg = 'CONFIG ' + msg
+
     def sender_thread(self):
         """ This function runs a thread which sends data with TCPSocket protocol:
             https://wiki.optofidelity.com/display/OTA/Communication+Protocol+Specification
         """
 
         while self.run_thread:
+            if self.config_msg is not '':
+                with self.config_lock:
+                    msg = self.config_msg
+                    self.config_msg = ''
+            else:
+                msg = self.create_message()
             # Check if messages available
-            msg = self.create_message()
             if msg is not '':
-
-                # Add necessary characters to make complete message
-                msg = '[' + msg + "'OK','']"
-
                 # Add length to beginning of the message
                 full_msg = self.add_length_to_msg(msg)
 

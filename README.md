@@ -28,6 +28,7 @@ max_tcp_freq
 screen_width
 screen_height
 require_gui
+client_id
 ```
 
 - Collected touch data is sent to defined IP-address and port.
@@ -35,6 +36,7 @@ require_gui
 - Maximum TCP-packet sending frequency can be set with max_tcp_freq parameter. App will then send more data in one package and reduce traffic in network.
 - Screen width and height are display resolution integers.
 - Require_gui is used to determine if the program should wait for GUI to connect and control the execution.
+- Client ID is used to differentiate DUTs connected to the same server.  Each DUT should have a unique ID.
 
 ##### Mandatory parameters
 If GUI is required, no parameter is mandatory. Necessary parameters are obtained from the device and GUI.
@@ -50,6 +52,7 @@ Other parameters will get default values, if not defined in configuration file:
 - port = 50007
 - device\_type = stylus
 - max\_tcp\_freq = 10
+- client_id = 0
 
 ##### Other
 - Device\_path has no default, it will be asked from user if the script is started manually

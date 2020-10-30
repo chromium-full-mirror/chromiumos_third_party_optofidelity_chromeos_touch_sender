@@ -9,10 +9,11 @@ import math
 import logging
 import threading
 import time
+import json
 
 from evdev import ecodes
 from threading import Lock
-from optofidelity_protocols.dut import Measurement
+from optofidelity_protocols.dut import Measurement, DUTConfig, Axis
 from .event import MtEvent
 from .state_machine import (Action, MtFinger, MtSnapshot,
                             MtbStateMachine, StylusStateMachine)
@@ -41,6 +42,7 @@ class SnapshotSender(object):
         self.max_tcp_freq = 10.0
         self.screen_w = 0
         self.screen_h = 0
+        self.client_id = 0
         self.require_gui = True
         self.device = None
         self.sm = None
@@ -123,6 +125,7 @@ class SnapshotSender(object):
         self.screen_w = int(conf.get('screen_width', self.screen_w))
         self.screen_h = int(conf.get('screen_height', self.screen_h))
         self.require_gui = util.str2bool(conf.get('require_gui', str(self.require_gui)))
+        self.client_id = int(conf.get('client_id', self.client_id))
 
     def configToFile(self):
         """ Function writes a new configuration file based on class current
@@ -136,7 +139,8 @@ class SnapshotSender(object):
                                device_path=self.devpath,
                                max_tcp_freq=self.max_tcp_freq,
                                screen_width=self.screen_w,
-                               screen_height=self.screen_h
+                               screen_height=self.screen_h,
+                               client_id=self.client_id
                                )
 
     def createEvent(self, ev):
@@ -214,27 +218,28 @@ class SnapshotSender(object):
             *data)
         return data_str
 
+    def axis_from_ecode(self, code):
+        info = self.device.absinfo(code)
+        return Axis(info.min, info.max, info.resolution)
+
     def getDeviceDataLimits(self):
-        try:
-            # Get device min/max info
-            self.min_x = self.device.absinfo(ecodes.ABS_X).min
-            self.max_x = self.device.absinfo(ecodes.ABS_X).max
-            self.min_y = self.device.absinfo(ecodes.ABS_Y).min
-            self.max_y = self.device.absinfo(ecodes.ABS_Y).max
+        # Get device axis info
+        self.x_axis = self.axis_from_ecode(ecodes.ABS_X)
+        self.y_axis = self.axis_from_ecode(ecodes.ABS_Y)
+        self.pressure_axis = self.axis_from_ecode(ecodes.ABS_PRESSURE)
+        self.touch_major_axis = self.axis_from_ecode(ecodes.ABS_MT_TOUCH_MAJOR)
+        self.touch_minor_axis = self.axis_from_ecode(ecodes.ABS_MT_TOUCH_MINOR)
 
-            # Get initial values of coordinates from device, if available
-            if self.device_type == STYLUS:
-                self.sm.x = self.device.absinfo(ecodes.ABS_X).value
-                self.sm.y = self.device.absinfo(ecodes.ABS_Y).value
-                self.sm.p = self.device.absinfo(ecodes.ABS_PRESSURE).value
+        # Get initial values of coordinates from device, if available
+        if self.device_type == STYLUS:
+            self.sm.x = self.device.absinfo(ecodes.ABS_X).value
+            self.sm.y = self.device.absinfo(ecodes.ABS_Y).value
+            self.sm.p = self.device.absinfo(ecodes.ABS_PRESSURE).value
 
-        except:
-            logger.warn(sys.exc_info()[0])
-
-        logger.info('x-min: {}'.format(self.min_x))
-        logger.info('x-max: {}'.format(self.max_x))
-        logger.info('y-min: {}'.format(self.min_y))
-        logger.info('y-max: {}'.format(self.max_y))
+        logger.info('x-min: {}'.format(self.x_axis.min))
+        logger.info('x-max: {}'.format(self.x_axis.max))
+        logger.info('y-min: {}'.format(self.y_axis.min))
+        logger.info('y-max: {}'.format(self.y_axis.max))
 
     def getStateMachine(self):
         if self.device_type == STYLUS:
@@ -448,12 +453,12 @@ class SnapshotSender(object):
         """ Scale coordinates to [0-max_value]
         """
         if x is not None:
-            x = x * self.screen_w / self.max_x
+            x = x * self.screen_w / self.x_axis.max
         else:
             x = 0.0
 
         if y is not None:
-            y = y * self.screen_h / self.max_y
+            y = y * self.screen_h / self.y_axis.max
         else:
             y = 0.0
 
@@ -475,7 +480,11 @@ class SnapshotSender(object):
 
     def sequencerCB(self, msg):
         """ Callback function for messages coming from Sequencer """
-        pass
+        if msg.decode("utf-8") == "CONFIG":
+            config = DUTConfig(self.client_id, self.x_axis, self.y_axis,
+                               self.pressure_axis, self.touch_major_axis,
+                               self.touch_minor_axis)
+            self.socket.send_config(json.dumps(config))
 
     def showData(self, datas):
         # Default: UP

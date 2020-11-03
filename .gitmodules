@@ -1,0 +1,3 @@
+[submodule "OptoFidelity_Touch_Test/optofidelity_protocols"]
+	path = OptoFidelity_Touch_Test/optofidelity_protocols
+	url = https://chromium.googlesource.com/chromiumos/third_party/optofidelity_protocols

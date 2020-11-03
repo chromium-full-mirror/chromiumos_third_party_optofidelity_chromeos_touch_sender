@@ -10,9 +10,9 @@ import logging
 import threading
 import time
 
-from collections import namedtuple
 from evdev import ecodes
 from threading import Lock
+from optofidelity_protocols.dut import Measurement
 from .event import MtEvent
 from .state_machine import (Action, MtFinger, MtSnapshot,
                             MtbStateMachine, StylusStateMachine)
@@ -26,11 +26,6 @@ STYLUS = 'stylus'
 
 logger = logging.getLogger(__name__)
 
-# This is the measurement format expected by the Optofidelity TPPT software,
-# defined here:
-# https://chromium.googlesource.com/chromiumos/third_party/optofidelity_TPPT/+/refs/heads/master/TPPTcommon/Measurement/Base.py
-Measurement = namedtuple('Measurement', ['panel_x', 'panel_y', 'pressure',
-    'finger_id', 'delay', 'time', 'event', 'yaw', 'tilt', 'UNKNOWN'])
 
 class SnapshotSender(object):
     """ Class for sending snapshot stream with to other application via socket.

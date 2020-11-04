@@ -40,8 +40,6 @@ class SnapshotSender(object):
         self.device_type = 'stylus'
         self.devpath = None
         self.max_tcp_freq = 10.0
-        self.screen_w = 0
-        self.screen_h = 0
         self.client_id = 0
         self.require_gui = True
         self.device = None
@@ -77,10 +75,6 @@ class SnapshotSender(object):
         if not self.require_gui:
             if self.ip is None:
                 raise ValueError('IP is required, if GUI is not')
-            if self.screen_w <= 0:
-                raise ValueError('Valid screen width is required, if GUI is not')
-            if self.screen_h <= 0:
-                raise ValueError('Valid screen height is required, if GUI is not')
 
     def collectEvents(self):
         while self.collect_events:
@@ -122,8 +116,6 @@ class SnapshotSender(object):
         self.device_type = conf.get('device_type', self.device_type)
         self.devpath = conf.get('device_path', self.devpath)
         self.max_tcp_freq = float(conf.get('max_tcp_freq', self.max_tcp_freq))
-        self.screen_w = int(conf.get('screen_width', self.screen_w))
-        self.screen_h = int(conf.get('screen_height', self.screen_h))
         self.require_gui = util.str2bool(conf.get('require_gui', str(self.require_gui)))
         self.client_id = int(conf.get('client_id', self.client_id))
 
@@ -138,8 +130,6 @@ class SnapshotSender(object):
                                device_type=self.device_type,
                                device_path=self.devpath,
                                max_tcp_freq=self.max_tcp_freq,
-                               screen_width=self.screen_w,
-                               screen_height=self.screen_h,
                                client_id=self.client_id
                                )
 
@@ -167,17 +157,14 @@ class SnapshotSender(object):
                 if pointer.x is not None:
                     x = float(pointer.x)
                 else:
-                    x = None
+                    x = 0.0
                 if pointer.y is not None:
                     y = float(pointer.y)
                 else:
-                    y = None
+                    y = 0.0
                 p = 0.0
                 if pointer.pressure is not None:
                     p = float(pointer.pressure)
-
-                # Scale coordinates to pixels
-                (x, y) = self.scaleData(x, y)
 
                 # Get tilt and yaw angles of stylus
                 (tilt, yaw) = self.sm.get_tilt_and_yaw()
@@ -195,7 +182,7 @@ class SnapshotSender(object):
                 # Use slot as pointer_id
                 pointer_id = str(slot)
                 # Scale coordinates to pixels
-                (x, y) = self.scaleData(float(finger.x), float(finger.y))
+                (x, y) = float(finger.x), float(finger.y)
                 p = float(finger.pressure)
                 tilt = 0.0
                 yaw = 0.0
@@ -448,21 +435,6 @@ class SnapshotSender(object):
                     logger.debug(data)
 
                 if self.gui.connection_ok: self.showData(datas)
-
-    def scaleData(self, x, y):
-        """ Scale coordinates to [0-max_value]
-        """
-        if x is not None:
-            x = x * self.screen_w / self.x_axis.max
-        else:
-            x = 0.0
-
-        if y is not None:
-            y = y * self.screen_h / self.y_axis.max
-        else:
-            y = 0.0
-
-        return (x, y)
 
     def sendViaSocket(self, data):
         """ Transforma data to string and send it with socket

@@ -59,6 +59,16 @@ class MtEvent(object):
     return (self.event_type == ecodes.EV_ABS and
             self.event_code == ecodes.ABS_MT_TOUCH_MAJOR)
 
+  def is_ABS_MT_TOUCH_MINOR(self):
+      """ Is this event ABS_MT_TOUCH_MINOR? """
+      return (self.event_type == ecodes.EV_ABS and
+              self.event_code == ecodes.ABS_MT_TOUCH_MINOR)
+
+  def is_ABS_MT_TOOL_TYPE(self):
+      """ Is this event ABS_MT_TOOL_TYPE? """
+      return (self.event_type == ecodes.EV_ABS and
+              self.event_code == ecodes.ABS_MT_TOOL_TYPE)
+
   def is_ABS_MT_DISTANCE(self):
     """ Is this event ABS_MT_DISTANCE? """
     return (self.event_type == ecodes.EV_ABS and

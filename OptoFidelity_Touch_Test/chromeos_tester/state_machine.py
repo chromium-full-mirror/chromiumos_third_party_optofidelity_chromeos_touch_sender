@@ -8,7 +8,9 @@ from .event import MtEvent
 from evdev.ecodes import EV_ABS, ABS_MT_TRACKING_ID
 
 
-MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure'])
+MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure',
+                                   'touch_major', 'touch_minor', 'tool_type'])
+MtFinger.__new__.__defaults__ = (0,) * 3
 MtSnapshot = namedtuple('MtSnapshot', ['syn_time', 'button_pressed',
                                        'fingers', 'raw_events'])
 
@@ -120,6 +122,10 @@ class MtbStateMachine(MtStateMachine):
             self.pressure[self.slot] = event.value
         elif event.is_ABS_MT_TOUCH_MAJOR():
             self.touch_major[self.slot] = event.value
+        elif event.is_ABS_MT_TOUCH_MINOR():
+            self.touch_minor[self.slot] = event.value
+        elif event.is_ABS_MT_TOOL_TYPE():
+            self.tool_type[self.slot] = event.value
         elif event.is_ABS_MT_DISTANCE():
             self.distance[self.slot] = event.value
 
@@ -152,6 +158,9 @@ class MtbStateMachine(MtStateMachine):
             x = self.x.get(slot, None)
             y = self.y.get(slot, None)
             distance = self.distance.get(slot, None)
+            touch_major = self.touch_major.get(slot, 0)
+            touch_minor = self.touch_minor.get(slot, 0)
+            tool_type = self.tool_type.get(slot, 0)
 
             # Skip any fingers that are hovering (they have a distance)
             if distance:
@@ -167,7 +176,8 @@ class MtbStateMachine(MtStateMachine):
             data_ready = all([v is not None for v in
                               (x, y, pressure, tid, self.syn_time)])
             if data_ready:
-                finger = MtFinger(tid, self.syn_time, x, y, pressure)
+                finger = MtFinger(tid, self.syn_time, x, y, pressure,
+                                  touch_major, touch_minor, tool_type)
                 current_fingers.append(finger)
 
         current_snapshot = MtSnapshot(self.syn_time, self.button_pressed,
@@ -200,6 +210,8 @@ class MtbStateMachine(MtStateMachine):
         self.distance = {}
         self.pressure = {}
         self.touch_major = {}
+        self.touch_minor = {}
+        self.tool_type = {}
         self.syn_time = None
         self.leaving_slots = []
         self.button_pressed = False

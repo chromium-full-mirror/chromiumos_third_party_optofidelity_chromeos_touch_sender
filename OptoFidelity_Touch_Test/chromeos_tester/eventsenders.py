@@ -154,17 +154,9 @@ class SnapshotSender(object):
             # sure
             for pointer in snapshot.fingers:
                 pointer_id = str(pointer.tid)
-                if pointer.x is not None:
-                    x = float(pointer.x)
-                else:
-                    x = 0.0
-                if pointer.y is not None:
-                    y = float(pointer.y)
-                else:
-                    y = 0.0
-                p = 0.0
-                if pointer.pressure is not None:
-                    p = float(pointer.pressure)
+                x = 0 if pointer.x is None else pointer.x
+                y = 0 if pointer.y is None else pointer.y
+                p = 0 if pointer.pressure is None else pointer.pressure
 
                 # Get tilt and yaw angles of stylus
                 (tilt, yaw) = self.sm.get_tilt_and_yaw()
@@ -181,29 +173,19 @@ class SnapshotSender(object):
                 slot = self.sm.get_slot_of_tid(finger.tid)
                 # Use slot as pointer_id
                 pointer_id = str(slot)
-                # Scale coordinates to pixels
-                (x, y) = float(finger.x), float(finger.y)
-                p = float(finger.pressure)
                 tilt = 0.0
                 yaw = 0.0
                 act = actions[slot]
-                data = Measurement(x, y, p, pointer_id, 0,
-                                   time, act, yaw, tilt, 0)
+                data = Measurement(finger.x, finger.y, finger.pressure,
+                                   pointer_id, 0, time, act, yaw, tilt, 0,
+                                   finger.touch_major, finger.touch_minor,
+                                   finger.tool_type, snapshot.button_pressed)
                 datas.append(data)
 
         else:
             datas = None
 
         return datas
-
-    def dataToString(self, data):
-        """ Create a string from data list
-        """
-        # Data string: x     y      force key time phase azim. alt.   ang
-        # dist
-        data_str = '({:.2f},{:.2f},{:.2f},{:s},{:d},{:d},{:d},{:.5f},{:.5f},{:d}),'.format(
-            *data)
-        return data_str
 
     def axis_from_ecode(self, code):
         info = self.device.absinfo(code)
@@ -431,24 +413,10 @@ class SnapshotSender(object):
             datas = self.createMessage(snapshot)
             if datas is not None:
                 for data in datas:
-                    self.sendViaSocket(data)
+                    self.socket.send(json.dumps(data) + ",")
                     logger.debug(data)
 
                 if self.gui.connection_ok: self.showData(datas)
-
-    def sendViaSocket(self, data):
-        """ Transforma data to string and send it with socket
-            Socket used is a class that handles connection and limits traffic
-        """
-        try:
-            msg = self.dataToString(data)
-
-        except ValueError:
-            logger.warn(
-                'Data is in invalid format. Check createMessage-function')
-            raise ValueError(data)
-
-        self.socket.send(msg)
 
     def sequencerCB(self, msg):
         """ Callback function for messages coming from Sequencer """

@@ -120,7 +120,7 @@ class SocketHandler(object):
 
         self.msg_lock.release()
         if ev_count > 0:
-            msg = '[' + msg + "'OK','']"
+            msg = '[' + msg + '"OK",""]'
         return msg
 
 

@@ -3,9 +3,9 @@
 # found in the LICENSE_chromiumos file.
 import math
 from collections import namedtuple
-from enum import IntEnum
 from .event import MtEvent
 from evdev.ecodes import EV_ABS, ABS_MT_TRACKING_ID
+from optofidelity_protocols.dut import Action
 
 
 MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure',
@@ -13,16 +13,6 @@ MtFinger = namedtuple('MtFinger', ['tid', 'syn_time', 'x', 'y', 'pressure',
 MtFinger.__new__.__defaults__ = (0,) * 3
 MtSnapshot = namedtuple('MtSnapshot', ['syn_time', 'button_pressed',
                                        'fingers', 'raw_events'])
-
-class Action(IntEnum):
-    """ Touch actions """
-    DOWN         = 0
-    UP           = 1
-    MOVE         = 2
-    CANCEL       = 3
-    HOVER_DOWN   = 9
-    HOVER_MOVE   = 7
-    HOVER_UP     = 10
 
 class MtStateMachine(object):
     """ This is an abstract base class that defines the interface of a multitouch

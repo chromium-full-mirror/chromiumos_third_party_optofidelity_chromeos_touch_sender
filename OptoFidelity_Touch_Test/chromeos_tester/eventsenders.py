@@ -13,10 +13,10 @@ import json
 
 from evdev import ecodes
 from threading import Lock
-from optofidelity_protocols.dut import Measurement, DUTConfig, Axis
+from optofidelity_protocols.dut import Action, Axis, DUTConfig, Measurement
 from .event import MtEvent
-from .state_machine import (Action, MtFinger, MtSnapshot,
-                            MtbStateMachine, StylusStateMachine)
+from .state_machine import (MtFinger, MtSnapshot, MtbStateMachine,
+                            StylusStateMachine)
 from .sockethandler import SocketHandler
 from .guihandler import JavascriptGUI
 from .util import devicechooser

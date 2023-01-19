@@ -34,9 +34,9 @@ def is_only_instance():
     curr_pid = os.getpid()
     count = 0
     pids = []
-    p = subprocess.Popen(["pgrep", '-af', 'python {}'.format(__file__)], stdout=subprocess.PIPE)
+    p = subprocess.Popen(["pgrep", '-af', 'python.* {}'.format(__file__)], stdout=subprocess.PIPE)
     for process in p.stdout:
-        pid = int(process.strip().split(' ')[0])
+        pid = int(process.strip().split(b' ')[0])
         count += 1
         if pid != curr_pid:
             pids.append(pid)
